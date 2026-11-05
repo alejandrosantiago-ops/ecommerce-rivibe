@@ -1,0 +1,153 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ---------------------------------------------------------------
+   RIVIBE — tokens del DESIGN.md (lookbook editorial, monocromo)
+   --------------------------------------------------------------- */
+@theme {
+  --color-carbon-ink: #000000;
+  --color-paper-white: #ffffff;
+  --color-soft-mist: #e5e7eb;
+  --color-warm-fog: #f0efe7;
+  --color-blush-sand: #f5ebd5;
+  --color-smoke-charcoal: #333333;
+  --color-onyx: #1d1d1d;
+  --color-stone-gray: #cccccc;
+  --color-slate: #2f3440;
+  --color-driftwood: #dfccbe;
+  --color-pale-tide: #badce4;
+
+  --text-micro: 10px;
+  --text-micro--line-height: 1.2;
+  --text-caption: 12px;
+  --text-caption--line-height: 1.33;
+  --text-body: 14px;
+  --text-body--line-height: 1.4;
+  --text-heading: 20px;
+  --text-heading--line-height: 1.2;
+  --text-display: 30px;
+  --text-display--line-height: 1.2;
+
+  --tracking-brand: 0.025em;
+  --tracking-label: 0.08em;
+
+  --spacing-section: 64px;
+  --container-page: 1440px;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-heading: var(--font-sans);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  /* Sistema anclado a 0px (imágenes, tarjetas, tags) y 4px (botones, inputs) */
+  --radius-sm: 2px;
+  --radius-md: var(--radius);
+  --radius-lg: var(--radius);
+  --radius-xl: var(--radius);
+  --radius-2xl: var(--radius);
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #000000;
+  --card: #ffffff;
+  --card-foreground: #000000;
+  --popover: #ffffff;
+  --popover-foreground: #000000;
+  --primary: #000000;
+  --primary-foreground: #ffffff;
+  --secondary: #f0efe7;
+  --secondary-foreground: #000000;
+  --muted: #e5e7eb;
+  --muted-foreground: #333333;
+  --accent: #f0efe7;
+  --accent-foreground: #000000;
+  --destructive: #b42318;
+  --border: #e5e7eb;
+  --input: #333333;
+  --ring: #000000;
+  --radius: 4px;
+
+  /* Alturas del chrome superior: el hero ocupa el resto del viewport */
+  --announcement-h: 32px;
+  --header-h: 56px;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --header-h: 64px;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-background text-foreground text-body antialiased;
+    letter-spacing: var(--tracking-brand);
+    font-feature-settings: "ss01" on, "cv11" on;
+  }
+  ::selection {
+    background: #000;
+    color: #fff;
+  }
+}
+
+@layer utilities {
+  .page-container {
+    @apply mx-auto w-full max-w-page px-4 md:px-8;
+  }
+  .label-caps {
+    @apply text-caption font-medium uppercase tracking-label;
+  }
+  /* Muestra de color agotada: diagonal fina */
+  .sold-out-slash {
+    background: linear-gradient(
+      to top right,
+      transparent calc(50% - 0.75px),
+      #000 calc(50% - 0.75px),
+      #000 calc(50% + 0.75px),
+      transparent calc(50% + 0.75px)
+    );
+  }
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,327 @@
+// RIVIBE — esquema de base de datos (PostgreSQL)
+// Refleja los tipos de src/lib/catalog.ts y src/lib/pricing.ts.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/**
+ * ============================== Catálogo ==============================
+ */
+
+enum ProductKind {
+  PRENDA
+  CONJUNTO
+  OFERTA
+}
+
+enum Size {
+  S
+  M
+  L
+}
+
+enum ImageKind {
+  LIFESTYLE // foto con modelo
+  FLAT // prenda plana por color
+  FLYER // afiche de oferta Shopping Days
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  name        String
+  description String
+  coverUrl    String
+  sortOrder   Int       @default(0)
+  products    Product[]
+}
+
+model Color {
+  id       String           @id @default(cuid())
+  slug     String           @unique
+  name     String
+  hex      String
+  products ProductColor[]
+  variants ProductVariant[]
+}
+
+model Product {
+  id           String           @id @default(cuid())
+  slug         String           @unique
+  name         String
+  kind         ProductKind      @default(PRENDA)
+  category     Category         @relation(fields: [categoryId], references: [id])
+  categoryId   String
+  fit          String
+  description  String
+  material     String?
+  /// Precio unitario (1–2 u.)
+  price        Decimal          @db.Decimal(10, 2)
+  isNew        Boolean          @default(false)
+  isBestSeller Boolean          @default(false)
+  isActive     Boolean          @default(true)
+  sortOrder    Int              @default(0)
+  sizeGuide    SizeGuide?       @relation(fields: [sizeGuideId], references: [id])
+  sizeGuideId  String?
+  colors       ProductColor[]
+  images       ProductImage[]
+  variants     ProductVariant[]
+  tiers        PriceTier[]
+  pieces       BundlePiece[]
+  orderItems   OrderItem[]
+  cartItems    CartItem[]
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@index([categoryId])
+  @@index([kind, isActive])
+}
+
+/// Colores disponibles por producto (con su foto plana si existe)
+model ProductColor {
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+  color     Color   @relation(fields: [colorId], references: [id])
+  colorId   String
+  imageUrl  String?
+  sortOrder Int     @default(0)
+
+  @@id([productId, colorId])
+}
+
+model ProductImage {
+  id        String    @id @default(cuid())
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+  url       String
+  alt       String
+  kind      ImageKind @default(LIFESTYLE)
+  sortOrder Int       @default(0)
+
+  @@index([productId])
+}
+
+/// Stock por combinación color + talla (colorId nulo = producto sin colores)
+model ProductVariant {
+  id        String  @id @default(cuid())
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+  color     Color?  @relation(fields: [colorId], references: [id])
+  colorId   String?
+  size      Size
+  sku       String  @unique
+  stock     Int     @default(0)
+
+  @@index([productId])
+}
+
+/// Precio por volumen: desde `minQty` unidades del MISMO producto (colores y tallas libres)
+model PriceTier {
+  id        String  @id @default(cuid())
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+  minQty    Int
+  unitPrice Decimal @db.Decimal(10, 2)
+
+  @@unique([productId, minQty])
+}
+
+/// Prendas de un conjunto u oferta: cada una lleva su propia talla
+model BundlePiece {
+  id        String   @id @default(cuid())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+  label     String
+  /// Si tiene opciones, el cliente elige una (ej. "Polera Star" o "Casaca con cierre")
+  options   String[]
+  sortOrder Int      @default(0)
+
+  @@index([productId])
+}
+
+model SizeGuide {
+  id       String    @id @default(cuid())
+  key      String    @unique
+  title    String
+  columns  String[]
+  /// { "S": [63, 63, 63, 20], "M": [...], "L": [...] } en cm
+  rows     Json
+  products Product[]
+}
+
+/**
+ * =============================== Usuarios ===============================
+ */
+
+enum Role {
+  CLIENTE
+  ADMIN
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String
+  phone        String?
+  city         String?
+  /// Se completa en la fase 5 (Auth.js)
+  passwordHash String?
+  role         Role      @default(CLIENTE)
+  isActive     Boolean   @default(true)
+  orders       Order[]
+  cart         Cart?
+  verified     Payment[] @relation("VerifiedBy")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+/**
+ * ================================ Carrito ================================
+ */
+
+/// Carrito de invitado (cookie `sessionId`) o de usuario registrado
+model Cart {
+  id        String     @id @default(cuid())
+  sessionId String?    @unique
+  user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String?    @unique
+  items     CartItem[]
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id           String   @id @default(cuid())
+  cart         Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  cartId       String
+  product      Product  @relation(fields: [productId], references: [id])
+  productId    String
+  colorSlug    String?
+  size         Size?
+  pieceSizes   Size[]
+  pieceOptions String[]
+  qty          Int
+
+  @@index([cartId])
+}
+
+/**
+ * ======================== Pedidos, envío y pagos ========================
+ */
+
+enum OrderStatus {
+  PENDIENTE_PAGO
+  PAGADO
+  PREPARANDO
+  ENVIADO
+  ENTREGADO
+  CANCELADO
+}
+
+enum PaymentMethod {
+  YAPE
+  PLIN
+  TRANSFERENCIA
+  TARJETA
+}
+
+enum PaymentStatus {
+  PENDIENTE
+  VERIFICADO
+  RECHAZADO
+}
+
+model Order {
+  id     String      @id @default(cuid())
+  number String      @unique
+  user   User?       @relation(fields: [userId], references: [id])
+  userId String?
+  status OrderStatus @default(PENDIENTE_PAGO)
+
+  // Datos del cliente (copiados al momento de la compra)
+  firstName String
+  lastName  String
+  dni       String
+  phone     String
+  email     String?
+
+  // Envío vía Shalom
+  department   String
+  province     String
+  district     String
+  shalomAgency String
+  trackingCode String?
+  notes        String?
+
+  subtotal     Decimal  @db.Decimal(10, 2)
+  /// Ahorro por precio de volumen
+  discount     Decimal  @default(0) @db.Decimal(10, 2)
+  shippingCost Decimal? @db.Decimal(10, 2)
+  total        Decimal  @db.Decimal(10, 2)
+
+  items     OrderItem[]
+  payment   Payment?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id           String   @id @default(cuid())
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId      String
+  product      Product  @relation(fields: [productId], references: [id])
+  productId    String
+  // Copia del producto al momento de la compra
+  productName  String
+  colorName    String?
+  size         Size?
+  pieceSizes   Size[]
+  pieceOptions String[]
+  qty          Int
+  regularPrice Decimal  @db.Decimal(10, 2)
+  unitPrice    Decimal  @db.Decimal(10, 2)
+  total        Decimal  @db.Decimal(10, 2)
+
+  @@index([orderId])
+}
+
+model Payment {
+  id           String        @id @default(cuid())
+  order        Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId      String        @unique
+  method       PaymentMethod
+  amount       Decimal       @db.Decimal(10, 2)
+  status       PaymentStatus @default(PENDIENTE)
+  voucherUrl   String?
+  note         String?
+  verifiedBy   User?         @relation("VerifiedBy", fields: [verifiedById], references: [id])
+  verifiedById String?
+  verifiedAt   DateTime?
+  createdAt    DateTime      @default(now())
+
+  @@index([status])
+}
+
+/**
+ * ================================ Contacto ================================
+ */
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  email     String?
+  city      String?
+  topic     String
+  message   String
+  handled   Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
