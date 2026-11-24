@@ -55,6 +55,6 @@ El `.env` **no se sube a GitHub**: tiene contraseñas, y su `DATABASE_URL` apunt
    ```
 3. **Cloudinary** (cloudinary.com, gratis): copia la *API Environment variable* (`cloudinary://…`).
 4. **Vercel** (vercel.com → *Add New Project* → importa el repo de GitHub). En *Environment Variables* agrega:
-   `DATABASE_URL` (la de Neon), `CLOUDINARY_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`. Luego *Deploy*.
+   `DATABASE_URL` (la de Neon *pooled*, con `-pooler` en el host), `DIRECT_URL` (la de Neon directa, para migraciones), `CLOUDINARY_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`. Luego *Deploy*.
 
 Vercel ejecuta `vercel-build` (`prisma migrate deploy && next build`), así que los cambios futuros del esquema se aplican solos en cada despliegue.
