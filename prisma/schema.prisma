@@ -177,8 +177,21 @@ model User {
   orders       Order[]
   cart         Cart?
   verified     Payment[] @relation("VerifiedBy")
+  sessions     Session[]
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+}
+
+/// Sesión del panel /admin (cookie httpOnly con un token; aquí solo se guarda su hash)
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 /**
@@ -324,4 +337,41 @@ model ContactMessage {
   message   String
   handled   Boolean  @default(false)
   createdAt DateTime @default(now())
+}
+
+/**
+ * ============================ Página de inicio ============================
+ */
+
+enum SectionType {
+  HERO // carrusel principal
+  CATEGORIES // "Compra por sección"
+  BEST_SELLERS // lo más vendido
+  OFFERS // ofertas Shopping Days
+  VOLUME_PRICING // tabla de precios por volumen
+  SETS // conjuntos (split editorial)
+  BENEFITS // beneficios con íconos
+  BANNER // banner con imagen, texto y botón (creado por la marca)
+  PRODUCTS // grilla de productos elegidos (creada por la marca)
+  TEXT // bloque de texto (creado por la marca)
+}
+
+/// Bloques de la página de inicio: la marca los edita, ordena, oculta y crea desde /admin/inicio
+model HomeSection {
+  id             String      @id @default(cuid())
+  type           SectionType
+  eyebrow        String?
+  title          String?
+  body           String?
+  ctaLabel       String?
+  ctaHref        String?
+  imageUrl       String?
+  mobileImageUrl String?
+  /// Contenido propio del tipo: diapositivas del hero, beneficios, productos elegidos, alineación…
+  data           Json        @default("{}")
+  isVisible      Boolean     @default(true)
+  sortOrder      Int         @default(0)
+  updatedAt      DateTime    @updatedAt
+
+  @@index([sortOrder])
 }

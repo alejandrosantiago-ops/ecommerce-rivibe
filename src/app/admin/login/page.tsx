@@ -2,15 +2,14 @@ import type { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
 
-import { buttonVariants } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import { AdminLoginForm } from "@/components/admin/login-form"
 
 export const metadata: Metadata = {
-  title: "Acceso administradores · RIVIBE",
+  title: "Acceso administradores",
   robots: { index: false, follow: false },
 }
 
-/** Diseño del acceso al panel. La autenticación (Auth.js, rol ADMIN) llega en la fase 5. */
+/** Acceso al panel: solo usuarios con rol ADMIN (ver src/lib/auth.ts) */
 export default function AdminLoginPage() {
   return (
     <div className="grid min-h-svh md:grid-cols-2">
@@ -29,29 +28,7 @@ export default function AdminLoginPage() {
           <Image src="/images/brand/rivibe-logo-black.png" alt="RIVIBE" width={663} height={177} className="h-6 w-auto" />
           <h1 className="mt-10 text-[26px] font-normal">Panel de administración</h1>
           <p className="mt-2 text-[13px] text-smoke-charcoal">Acceso solo para el equipo RIVIBE.</p>
-          <form action="/admin" className="mt-8 space-y-4">
-            <label className="block">
-              <span className="label-caps">Correo</span>
-              <input
-                type="email"
-                required
-                autoComplete="username"
-                className="mt-1.5 h-11 w-full rounded-md border border-stone-gray px-3 text-[14px] focus:border-carbon-ink focus:outline-none"
-              />
-            </label>
-            <label className="block">
-              <span className="label-caps">Contraseña</span>
-              <input
-                type="password"
-                required
-                autoComplete="current-password"
-                className="mt-1.5 h-11 w-full rounded-md border border-stone-gray px-3 text-[14px] focus:border-carbon-ink focus:outline-none"
-              />
-            </label>
-            <button type="submit" className={cn(buttonVariants({ size: "cta" }), "h-12 w-full")}>
-              Ingresar
-            </button>
-          </form>
+          <AdminLoginForm />
           <Link href="/" className="mt-6 inline-block text-[12px] underline underline-offset-2">
             Volver a la tienda
           </Link>

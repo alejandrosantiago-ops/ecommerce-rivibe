@@ -2,12 +2,14 @@ import Image from "next/image"
 import Link from "next/link"
 
 import type { Category } from "@/lib/catalog"
-import { SectionHeading } from "@/components/home/section-heading"
+import type { HomeSection } from "@/lib/home"
+import { SectionHeading, sectionLink } from "@/components/home/section-heading"
 
-export function CategoryStrip({ sections }: { sections: Category[] }) {
+export function CategoryStrip({ sections, section }: { sections: Category[]; section: HomeSection }) {
+  if (!sections.length) return null
   return (
     <section className="page-container pt-section">
-      <SectionHeading title="Compra por sección" link={{ label: "Ver productos", href: "/productos" }} />
+      <SectionHeading eyebrow={section.eyebrow} title={section.title} link={sectionLink(section)} />
       <ul className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 md:mx-0 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:px-0 lg:grid-cols-6">
         {sections.map((c) => (
           <li key={c.slug} className="w-[42%] shrink-0 snap-start sm:w-[30%] md:w-auto">

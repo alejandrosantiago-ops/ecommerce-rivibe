@@ -5,13 +5,18 @@
  *   npx prisma db seed            → catálogo + datos de ejemplo
  *   SEED_DEMO=false npx prisma db seed → solo catálogo
  *
- * Es idempotente: borra y vuelve a crear todo. NO usar contra producción con pedidos reales.
+ * Es idempotente: borra y vuelve a crear todo (también lo editado desde el panel).
+ * NO usar contra producción con pedidos reales.
+ *
+ * Crea el administrador del panel con ADMIN_EMAIL y ADMIN_PASSWORD (variables de entorno / .env).
  */
 import { PrismaPg } from "@prisma/adapter-pg"
 import { PrismaClient, type ImageKind, type PaymentMethod, type PaymentStatus, type ProductKind, type Size } from "../src/generated/prisma/client"
 import type { SizeGuideKey } from "../src/lib/catalog"
 import { SIZES, categories, offers, products, setsCategory, sizeGuides } from "../src/lib/catalog-data"
 import { payments, stockBySlug, users } from "../src/lib/admin-data"
+import { DEFAULT_SECTIONS } from "../src/lib/home"
+import { createAdmin } from "./admin-user"
 
 const db = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }) })
 const withDemo = process.env.SEED_DEMO !== "false"
@@ -33,6 +38,8 @@ function parseDate(s: string) {
 
 async function reset() {
   // Orden inverso a las dependencias
+  await db.homeSection.deleteMany()
+  await db.session.deleteMany()
   await db.payment.deleteMany()
   await db.orderItem.deleteMany()
   await db.order.deleteMany()
@@ -220,10 +227,19 @@ async function seedDemo() {
   console.log(`Demo: ${users.length} usuarios, ${payments.length} pedidos con pago`)
 }
 
+async function seedHome() {
+  await db.homeSection.createMany({
+    data: DEFAULT_SECTIONS.map((s, i) => ({ ...s, data: s.data as object, sortOrder: i })),
+  })
+  console.log(`Inicio: ${DEFAULT_SECTIONS.length} bloques`)
+}
+
 async function main() {
   await reset()
   await seedCatalog()
+  await seedHome()
   if (withDemo) await seedDemo()
+  await createAdmin(db)
 }
 
 main()

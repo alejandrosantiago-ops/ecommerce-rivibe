@@ -2,25 +2,23 @@ import Image from "next/image"
 import Link from "next/link"
 
 import { type Product, formatPrice } from "@/lib/catalog"
-import { SectionHeading } from "@/components/home/section-heading"
+import type { HomeSection } from "@/lib/home"
+import { SectionHeading, sectionLink } from "@/components/home/section-heading"
 
 /** DESIGN.md — Split Editorial Section: dos imágenes a 50%, casi sin separación */
-export function EditorialSplit({ sets }: { sets: Product[] }) {
+export function EditorialSplit({ sets, section }: { sets: Product[]; section: HomeSection }) {
+  if (!sets.length) return null
   return (
     <section className="pt-section">
       <div className="page-container">
-        <SectionHeading
-          eyebrow="Conjuntos"
-          title="El outfit perfecto, en un solo set"
-          link={{ label: "Ver conjuntos", href: "/conjuntos" }}
-        />
+        <SectionHeading eyebrow={section.eyebrow} title={section.title} link={sectionLink(section)} />
       </div>
       <div className="grid gap-1 md:grid-cols-2">
         {sets.map((p) => (
           <Link key={p.slug} href={`/producto/${p.slug}`} className="group relative block">
             <div className="relative aspect-[4/5] overflow-hidden bg-warm-fog lg:aspect-square">
               <Image
-                src={p.lifestyle[0]}
+                src={p.lifestyle[0] ?? p.colors[0]?.image ?? "/images/brand/rivibe-logo-black.png"}
                 alt={p.name}
                 fill
                 sizes="(min-width: 768px) 50vw, 100vw"

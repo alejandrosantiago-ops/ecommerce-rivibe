@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# RIVIBE — tienda online (demo)
 
-## Getting Started
+Next.js 16 · Tailwind v4 · PostgreSQL · Prisma 7. Plan y avance por fases en [`PLAN.md`](PLAN.md).
 
-First, run the development server:
+## En tu computadora (después de clonar el repo)
+
+**Requisitos:** Node.js 20.12 o más nuevo y una base de datos **PostgreSQL**. La base de datos **no viene en el repo**: cada persona usa la suya. Tienes dos opciones:
+
+- **PostgreSQL local**: instálalo (postgresql.org/download) y crea una base vacía llamada `rivibe` (por ejemplo, desde pgAdmin).
+- **Neon** (neon.tech, gratis y sin instalar nada): crea un proyecto y copia la *connection string*.
+
+Luego:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env        # en PowerShell: Copy-Item .env.example .env
+#   → abre .env y pon TU DATABASE_URL (usuario, clave y base de datos de tu PostgreSQL o de Neon)
+npm install                 # instala dependencias y genera el cliente de Prisma
+npm run db:setup            # crea las tablas y carga catálogo, portada, datos de ejemplo y el administrador
+npm run dev                 # http://localhost:3000  ·  panel: /admin
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Entra al panel `/admin` con el `ADMIN_EMAIL` y `ADMIN_PASSWORD` que pusiste en el `.env`.
+`npm run admin:create` crea el administrador o le cambia la contraseña.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Errores comunes con la base de datos
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Mensaje | Qué pasa | Solución |
+|---|---|---|
+| `Falta DATABASE_URL` / `datasource.url is required` | No existe el archivo `.env` | Copia `.env.example` a `.env` y complétalo |
+| `P1000: Authentication failed` | Usuario o clave incorrectos en `DATABASE_URL` | Usa la clave que pusiste al instalar PostgreSQL |
+| `P1001: Can't reach database server` | PostgreSQL no está encendido o la URL está mal | Inicia el servicio de PostgreSQL o revisa la URL |
+| `P1003: Database rivibe does not exist` | La base de datos no existe | Créala en pgAdmin (`CREATE DATABASE rivibe;`) |
+| `The table ... does not exist` (P2021) | No se crearon las tablas | Ejecuta `npm run db:setup` |
+| Error al importar `@/generated/prisma` | No se generó el cliente | Ejecuta `npm run db:generate` |
 
-## Learn More
+Si cambias el esquema (`prisma/schema.prisma`), crea una migración con `npm run db:migrate` y súbela a GitHub junto con el cambio.
 
-To learn more about Next.js, take a look at the following resources:
+## Panel de administración (`/admin`)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Productos**: nombre, descripción, precios (unitario, +3 y +5 u.), fotos, colores, stock por talla, piezas de los packs, publicar/ocultar, orden.
+- **Secciones**: crear, renombrar, cambiar portada, ordenar y borrar secciones del menú Productos.
+- **Página de inicio**: editar textos, fotos y botones de cada bloque, ordenar, ocultar y agregar bloques nuevos (banner, grilla de productos, texto).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Los cambios se ven en la tienda en cuanto se guardan.
 
-## Deploy on Vercel
+## Publicar en internet (Vercel + Neon)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+El `.env` **no se sube a GitHub**: tiene contraseñas, y su `DATABASE_URL` apunta a `localhost` (tu PC), a la que un servidor de internet no puede entrar. En línea se usa una base de datos en la nube y las variables se guardan en Vercel.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **Neon** (neon.tech, gratis): crea un proyecto y copia la *connection string* (`postgresql://…?sslmode=require`).
+2. **Cargar datos en Neon** desde tu PC (una sola vez):
+   ```bash
+   # PowerShell
+   $env:DATABASE_URL="postgresql://…neon…?sslmode=require"; npx prisma migrate deploy; npm run db:seed
+   ```
+3. **Cloudinary** (cloudinary.com, gratis): copia la *API Environment variable* (`cloudinary://…`).
+4. **Vercel** (vercel.com → *Add New Project* → importa el repo de GitHub). En *Environment Variables* agrega:
+   `DATABASE_URL` (la de Neon), `CLOUDINARY_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`. Luego *Deploy*.
+
+Vercel ejecuta `vercel-build` (`prisma migrate deploy && next build`), así que los cambios futuros del esquema se aplican solos en cada despliegue.

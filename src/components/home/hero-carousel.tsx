@@ -7,50 +7,13 @@ import { Pause, Play } from "lucide-react"
 
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import type { HeroSlide as HeroSlideData } from "@/lib/home"
 
-type Slide = {
-  id: string
-  title: string
-  text: string
-  cta: { label: string; href: string }
-  desktop: { src: string; width: number; height: number; position: string }
-  mobile: { src: string; width: number; height: number }
-  alt: string
-  /** Tinta del texto en escritorio según la foto: fondo gris oscuro → claro; muro claro → oscuro */
-  tone: "light" | "dark"
-  /** Lado vacío de la foto en escritorio, donde va el texto */
-  align: "left" | "right"
-}
-
-const slides: Slide[] = [
-  {
-    id: "ofertas",
-    title: "Más prendas, mejor precio",
-    text: "Desde las 3 unidades, viste más y aprovecha nuestros precios especiales",
-    cta: { label: "Descubrir ofertas", href: "/ofertas" },
-    // Versión panorámica (fondo de estudio extendido a la izquierda): el modelo entra completo en pantallas anchas
-    desktop: { src: "/images/hero/hero-1-wide.jpg", width: 2446, height: 941, position: "96% 50%" },
-    mobile: { src: "/images/hero/hero-1-mobile.png", width: 1024, height: 1536 },
-    alt: "Modelo con polo negro oversize y pantalón beige sobre fondo gris",
-    tone: "light",
-    align: "left",
-  },
-  {
-    id: "conjuntos",
-    title: "El outfit perfecto, en un solo set",
-    text: "Tres prendas, un solo estilo. Encuentra conjuntos listos para combinar.",
-    cta: { label: "Ver conjuntos", href: "/conjuntos" },
-    desktop: { src: "/images/hero/hero-2.png", width: 1671, height: 941, position: "25% 30%" },
-    mobile: { src: "/images/hero/hero-2-mobile.png", width: 1024, height: 1536 },
-    alt: "Modelo con conjunto azul marino de hoodie con cierre y jogger frente a un muro claro",
-    tone: "dark",
-    align: "right",
-  },
-]
+type Slide = HeroSlideData
 
 const AUTOPLAY_MS = 6500
 
-export function HeroCarousel() {
+export function HeroCarousel({ slides }: { slides: Slide[] }) {
   const [index, setIndex] = useState(0)
   const [playing, setPlaying] = useState(true)
   const [hovered, setHovered] = useState(false)
@@ -58,7 +21,7 @@ export function HeroCarousel() {
 
   const go = useCallback((next: number) => {
     setIndex((next + slides.length) % slides.length)
-  }, [])
+  }, [slides.length])
 
   useEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches
@@ -66,6 +29,9 @@ export function HeroCarousel() {
     const id = window.setTimeout(() => go(index + 1), AUTOPLAY_MS)
     return () => window.clearTimeout(id)
   }, [index, playing, hovered, go])
+
+  if (!slides.length) return null
+  const current = slides[Math.min(index, slides.length - 1)]
 
   return (
     <section
@@ -89,13 +55,13 @@ export function HeroCarousel() {
       }}
     >
       {slides.map((slide, i) => (
-        <HeroSlide key={slide.id} slide={slide} active={i === index} first={i === 0} position={i + 1} />
+        <HeroSlide key={slide.id} slide={slide} active={i === index} first={i === 0} position={i + 1} total={slides.length} />
       ))}
 
       {/* DESIGN.md — paginación con barras finas de 30×2px */}
       <div className="absolute inset-x-0 bottom-5 z-20 flex items-center justify-center gap-2 md:bottom-7">
         {slides.map((slide, i) => {
-          const light = slides[index].tone === "light"
+          const light = current.tone === "light"
           return (
             <button
               key={slide.id}
@@ -123,7 +89,7 @@ export function HeroCarousel() {
           aria-label={playing ? "Pausar carrusel" : "Reproducir carrusel"}
           className={cn(
             "ml-2 flex size-6 items-center justify-center portrait:text-white",
-            slides[index].tone === "light" ? "text-white" : "text-black",
+            current.tone === "light" ? "text-white" : "text-black",
           )}
         >
           {playing ? <Pause className="size-3" /> : <Play className="size-3" />}
@@ -138,11 +104,13 @@ function HeroSlide({
   active,
   first,
   position,
+  total,
 }: {
   slide: Slide
   active: boolean
   first: boolean
   position: number
+  total: number
 }) {
   const common = { alt: slide.alt, sizes: "100vw" }
   const {
@@ -158,7 +126,7 @@ function HeroSlide({
     <div
       role="group"
       aria-roledescription="slide"
-      aria-label={`${position} de ${slides.length}`}
+      aria-label={`${position} de ${total}`}
       aria-hidden={!active}
       inert={!active}
       className={cn(
@@ -174,7 +142,7 @@ function HeroSlide({
           alt={slide.alt}
           loading={first ? "eager" : "lazy"}
           fetchPriority={first ? "high" : "auto"}
-          style={{ objectPosition: slide.desktop.position }}
+          style={{ objectPosition: slide.position || "50% 50%" }}
           className="absolute inset-0 h-full w-full object-cover portrait:object-[50%_30%]!"
         />
       </picture>
@@ -203,11 +171,12 @@ function HeroSlide({
           ) : (
             <h2 className="text-display font-normal md:text-[40px] md:leading-[1.1]">{slide.title}</h2>
           )}
-          <p className={cn("mt-4 max-w-sm text-[14px]", light ? "text-white/85" : "text-black/75", "portrait:text-white/85")}>
+          {slide.text && <p className={cn("mt-4 max-w-sm text-[14px]", light ? "text-white/85" : "text-black/75", "portrait:text-white/85")}>
             {slide.text}
-          </p>
+          </p>}
+          {slide.ctaLabel && (
           <Link
-            href={slide.cta.href}
+            href={slide.ctaHref || "/catalogo"}
             className={cn(
               buttonVariants({ variant: light ? "light" : "ink", size: "cta" }),
               "mt-7",
@@ -215,8 +184,9 @@ function HeroSlide({
                 "portrait:border-white portrait:text-white portrait:hover:bg-white portrait:hover:text-black",
             )}
           >
-            {slide.cta.label}
+            {slide.ctaLabel}
           </Link>
+          )}
         </div>
       </div>
     </div>

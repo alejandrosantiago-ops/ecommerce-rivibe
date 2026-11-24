@@ -68,19 +68,26 @@ PostgreSQL 18 local (servicio `postgresql-x64-18`), Prisma 7.10.1 con adaptador 
 - [x] Filtros en catálogo y secciones: color, precio (por volumen), solo con stock + orden.
 - [ ] Pendiente: los favoritos siguen en el navegador (pasan a la cuenta del usuario en la fase 5).
 
-## Fase 4 — Checkout y pagos
+## Fase 4 — Checkout y pagos · omitida (sitio demostrativo)
 
-- ~~Checkout en 3 pasos~~ (hecho en la fase 3, con pago manual Yape/Plin/transferencia)
-- Pasarela peruana (Culqi / Mercado Pago / Izipay) + opción Yape/Plin con confirmación manual
-- Correos de confirmación (Resend), seguimiento del pedido
+- El checkout con pago manual Yape/Plin/transferencia de la fase 3 queda como está; sin pasarela ni correos.
 
-## Fase 5 — Administración
+## Fase 5 — Administración · completa
 
-- Conectar el panel `/admin` (ya diseñado) a Prisma y protegerlo con Auth.js (rol ADMIN) desde `proxy.ts`
-- Subida de imágenes (Vercel Blob / Cloudinary)
+- [x] Acceso al panel con usuario ADMIN: contraseña con scrypt, sesión en BD (`Session`) con cookie httpOnly
+      (`src/lib/auth.ts`); `src/proxy.ts` redirige al login y cada página/acción valida con `requireAdmin()`
+- [x] Administrador desde `.env` (`ADMIN_EMAIL`, `ADMIN_PASSWORD`): `npm run admin:create` o el seed
+- [x] **Productos** (`/admin/productos`) conectados a Prisma: crear, editar, borrar (u ocultar si tiene pedidos),
+      precios +3/+5, fotos ordenables, colores (y colores nuevos), stock color × talla, piezas de packs, orden
+- [x] **Secciones** (`/admin/secciones`): crear, editar, portada, ordenar, borrar (si no tiene productos)
+- [x] **Página de inicio** (`/admin/inicio`): tabla `HomeSection`; editar, ordenar, ocultar y agregar bloques
+      (banner, grilla de productos, texto); hero con diapositivas editables
+- [x] Subida de imágenes (`/api/admin/upload`): Cloudinary con `CLOUDINARY_URL`; en local sin Cloudinary → `public/uploads`
+- [x] La tienda se actualiza al guardar (`updateTag` de `catalog` y `home`)
+- [ ] Resumen, Pagos y Usuarios siguen con datos de ejemplo (fuera de alcance: sitio demostrativo)
 
 ## Fase 6 — Lanzamiento
 
 - SEO (metadata por producto, sitemap, Open Graph), analítica, Pixel de Meta/TikTok
 - Rendimiento (imágenes optimizadas, ISR/caché), accesibilidad
-- Deploy (Vercel + Postgres gestionado: Neon/Supabase), dominio
+- Deploy (Vercel + Neon + Cloudinary), dominio — pasos en README.md

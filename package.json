@@ -2,6 +2,9 @@
   "name": "ecommerce-rivibe",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20.12"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -12,7 +15,11 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
     "db:reset": "prisma migrate reset",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "admin:create": "tsx prisma/admin-user.ts",
+    "db:deploy": "prisma migrate deploy",
+    "db:setup": "prisma migrate deploy && prisma db seed",
+    "vercel-build": "prisma migrate deploy && next build"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

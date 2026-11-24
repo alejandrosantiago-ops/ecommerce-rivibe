@@ -5,10 +5,11 @@ import { useState } from "react"
 import type { Product } from "@/lib/catalog"
 import { useCatalog } from "@/components/catalog-provider"
 import { ProductGrid } from "@/components/product/product-card"
-import { SectionHeading } from "@/components/home/section-heading"
+import type { HomeSection } from "@/lib/home"
+import { SectionHeading, sectionLink } from "@/components/home/section-heading"
 import { CategoryTabs } from "@/components/product/category-tabs"
 
-export function BestSellers({ products }: { products: Product[] }) {
+export function BestSellers({ products, section }: { products: Product[]; section: HomeSection }) {
   const [active, setActive] = useState("todo")
   const { categories } = useCatalog()
   const present = categories.filter((c) => products.some((p) => p.categorySlug === c.slug))
@@ -17,7 +18,7 @@ export function BestSellers({ products }: { products: Product[] }) {
 
   return (
     <section className="page-container pt-section">
-      <SectionHeading title="Lo más vendido" link={{ label: "Ver catálogo", href: "/catalogo" }} />
+      <SectionHeading eyebrow={section.eyebrow} title={section.title} link={sectionLink(section)} />
       <CategoryTabs
         className="mb-8"
         items={tabs.map((t) => ({ ...t, active: t.value === active, onSelect: () => setActive(t.value) }))}

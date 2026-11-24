@@ -4,10 +4,10 @@ import { type Product, findProduct, formatPrice, unitPriceFor } from "@/lib/cata
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
-const EXAMPLES = ["polo-basic-boxy-fit", "polo-basic-oversized", "jogger-baggy-basic", "hoodie-basic-oversized", "camisero-piquet"]
+import type { HomeSection } from "@/lib/home"
 
-export function VolumePricing({ products }: { products: Product[] }) {
-  const examples = EXAMPLES.map((slug) => findProduct(products, slug)).filter(
+export function VolumePricing({ products, section }: { products: Product[]; section: HomeSection }) {
+  const examples = (section.data.productSlugs ?? []).map((slug) => findProduct(products, slug)).filter(
     (p): p is Product => p !== undefined && p.tiers.length > 0,
   )
 
@@ -15,15 +15,14 @@ export function VolumePricing({ products }: { products: Product[] }) {
     <section className="mt-section bg-blush-sand">
       <div className="page-container grid gap-10 py-16 md:grid-cols-2 md:items-center md:py-20">
         <div>
-          <p className="label-caps text-smoke-charcoal">Precios por volumen</p>
-          <h2 className="mt-3 text-display font-normal md:text-[36px]">Desde 3 y 5 unidades, pagas menos por cada una</h2>
-          <p className="mt-4 max-w-md text-body text-smoke-charcoal">
-            Lleva 3 o 5 unidades del mismo producto y combina los colores y tallas que quieras. El precio especial se
-            activa automáticamente en tu carrito.
-          </p>
-          <Link href="/catalogo" className={cn(buttonVariants({ variant: "ink", size: "cta" }), "mt-7")}>
-            Armar mi pedido
-          </Link>
+          {section.eyebrow && <p className="label-caps text-smoke-charcoal">{section.eyebrow}</p>}
+          <h2 className="mt-3 text-display font-normal md:text-[36px]">{section.title}</h2>
+          {section.body && <p className="mt-4 max-w-md text-body whitespace-pre-line text-smoke-charcoal">{section.body}</p>}
+          {section.ctaLabel && (
+            <Link href={section.ctaHref || "/catalogo"} className={cn(buttonVariants({ variant: "ink", size: "cta" }), "mt-7")}>
+              {section.ctaLabel}
+            </Link>
+          )}
         </div>
 
         <div className="overflow-x-auto">

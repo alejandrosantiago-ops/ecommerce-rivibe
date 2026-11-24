@@ -2,12 +2,14 @@ import Image from "next/image"
 import Link from "next/link"
 
 import { type Product, formatPrice } from "@/lib/catalog"
-import { SectionHeading } from "@/components/home/section-heading"
+import type { HomeSection } from "@/lib/home"
+import { SectionHeading, sectionLink } from "@/components/home/section-heading"
 
-export function OffersStrip({ offers }: { offers: Product[] }) {
+export function OffersStrip({ offers, section }: { offers: Product[]; section: HomeSection }) {
+  if (!offers.length) return null
   return (
     <section className="page-container pt-section">
-      <SectionHeading eyebrow="Shopping Days" title="Ofertas por tiempo limitado" link={{ label: "Ver ofertas", href: "/ofertas" }} />
+      <SectionHeading eyebrow={section.eyebrow} title={section.title} link={sectionLink(section)} />
       <ul className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
         {offers.map((o) => (
           <li key={o.slug} className="w-[72%] shrink-0 snap-start sm:w-auto">
